@@ -28,7 +28,7 @@ from monologue_flow import (
     monologue_create_final_conversation,
 )
 from shared.storage import StorageManager
-from shared.llmmanager import LLMManager
+from shared.llmmanager import LLMManagerGemini
 from shared.job import JobStatusManager
 from shared.otel import OpenTelemetryInstrumentation, OpenTelemetryConfig
 from opentelemetry.trace.status import StatusCode
@@ -82,8 +82,8 @@ async def process_transcription(job_id: str, request: TranscriptionRequest):
     with telemetry.tracer.start_as_current_span("agent.process_transcription") as span:
         try:
             # Initialize LLM manager and prompt tracker
-            llm_manager = LLMManager(
-                api_key=os.getenv("NVIDIA_API_KEY"),
+            llm_manager = LLMManagerGemini(
+                api_key=os.getenv("GOOGLE_API_KEY"),
                 telemetry=telemetry,
                 config_path=os.getenv("MODEL_CONFIG_PATH"),
             )

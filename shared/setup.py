@@ -19,5 +19,6 @@ setup(
         "httpx",  # For async HTTP requests
         "requests",  # For sync HTTP requests
         "langchain-nvidia-ai-endpoints",  # For AI model integration
+        "langchain-google-genai",  # For Google GenAI integration
     ],
 )

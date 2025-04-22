@@ -8,7 +8,7 @@ It includes functionality for summarizing PDFs, generating outlines, and creatin
 from shared.pdf_types import PDFMetadata
 from shared.podcast_types import Conversation, PodcastOutline
 from shared.api_types import JobStatus, TranscriptionRequest
-from shared.llmmanager import LLMManager
+from shared.llmmanager import LLMManagerGemini
 from shared.job import JobStatusManager
 from typing import List, Dict, Any, Coroutine
 import ujson as json
@@ -20,14 +20,14 @@ import asyncio
 
 
 async def podcast_summarize_pdf(
-    pdf_metadata: PDFMetadata, llm_manager: LLMManager, prompt_tracker: PromptTracker
+    pdf_metadata: PDFMetadata, llm_manager: LLMManagerGemini, prompt_tracker: PromptTracker
 ) -> AIMessage:
     """
     Summarize a single PDF document using the LLM.
 
     Args:
         pdf_metadata (PDFMetadata): The PDF document metadata and content to summarize
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
 
     Returns:
@@ -55,7 +55,7 @@ async def podcast_summarize_pdf(
 async def podcast_summarize_pdfs(
     pdfs: List[PDFMetadata],
     job_id: str,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
     job_manager: JobStatusManager,
     logger: logging.Logger,
@@ -66,7 +66,7 @@ async def podcast_summarize_pdfs(
     Args:
         pdfs (List[PDFMetadata]): List of PDFs to summarize
         job_id (str): ID for tracking job progress
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
         job_manager (JobStatusManager): Manages job status updates
         logger (logging.Logger): Logger for tracking progress
@@ -96,7 +96,7 @@ async def podcast_summarize_pdfs(
 async def podcast_generate_raw_outline(
     summarized_pdfs: List[PDFMetadata],
     request: TranscriptionRequest,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
     job_id: str,
     job_manager: JobStatusManager,
@@ -108,7 +108,7 @@ async def podcast_generate_raw_outline(
     Args:
         summarized_pdfs (List[PDFMetadata]): PDFs with their summaries
         request (TranscriptionRequest): Original transcription request
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
         job_id (str): ID for tracking job progress
         job_manager (JobStatusManager): Manages job status updates
@@ -161,7 +161,7 @@ async def podcast_generate_raw_outline(
 async def podcast_generate_structured_outline(
     raw_outline: str,
     request: TranscriptionRequest,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
     job_id: str,
     job_manager: JobStatusManager,
@@ -173,7 +173,7 @@ async def podcast_generate_structured_outline(
     Args:
         raw_outline (str): Raw outline text to structure
         request (TranscriptionRequest): Original transcription request
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
         job_id (str): ID for tracking job progress
         job_manager (JobStatusManager): Manages job status updates
@@ -224,7 +224,7 @@ async def podcast_process_segment(
     segment: Any,
     idx: int,
     request: TranscriptionRequest,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
 ) -> tuple[str, str]:
     """
@@ -234,7 +234,7 @@ async def podcast_process_segment(
         segment (Any): Segment from the outline to process
         idx (int): Index of the segment
         request (TranscriptionRequest): Original transcription request
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
 
     Returns:
@@ -294,7 +294,7 @@ async def podcast_process_segment(
 async def podcast_process_segments(
     outline: PodcastOutline,
     request: TranscriptionRequest,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
     job_id: str,
     job_manager: JobStatusManager,
@@ -306,7 +306,7 @@ async def podcast_process_segments(
     Args:
         outline (PodcastOutline): Structured outline to process
         request (TranscriptionRequest): Original transcription request
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
         job_id (str): ID for tracking job progress
         job_manager (JobStatusManager): Manages job status updates
@@ -348,7 +348,7 @@ async def podcast_generate_dialogue_segment(
     idx: int,
     segment_text: str,
     request: TranscriptionRequest,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
 ) -> Dict[str, str]:
     """
@@ -359,7 +359,7 @@ async def podcast_generate_dialogue_segment(
         idx (int): Index of the segment
         segment_text (str): Generated content for the segment
         request (TranscriptionRequest): Original transcription request
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
 
     Returns:
@@ -409,7 +409,7 @@ async def podcast_generate_dialogue(
     segments: Dict[str, str],
     outline: PodcastOutline,
     request: TranscriptionRequest,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
     job_id: str,
     job_manager: JobStatusManager,
@@ -422,7 +422,7 @@ async def podcast_generate_dialogue(
         segments (Dict[str, str]): Dictionary of segment IDs and their content
         outline (PodcastOutline): Structured outline
         request (TranscriptionRequest): Original transcription request
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
         job_id (str): ID for tracking job progress
         job_manager (JobStatusManager): Manages job status updates
@@ -475,7 +475,7 @@ async def podcast_generate_dialogue(
 async def podcast_combine_dialogues(
     segment_dialogues: List[Dict[str, str]],
     outline: PodcastOutline,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
     job_id: str,
     job_manager: JobStatusManager,
@@ -487,7 +487,7 @@ async def podcast_combine_dialogues(
     Args:
         segment_dialogues (List[Dict[str, str]]): List of segment dialogues
         outline (PodcastOutline): Structured outline
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
         job_id (str): ID for tracking job progress
         job_manager (JobStatusManager): Manages job status updates
@@ -550,7 +550,7 @@ async def podcast_combine_dialogues(
 async def podcast_create_final_conversation(
     dialogue: str,
     request: TranscriptionRequest,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
     job_id: str,
     job_manager: JobStatusManager,
@@ -562,7 +562,7 @@ async def podcast_create_final_conversation(
     Args:
         dialogue (str): Combined dialogue text
         request (TranscriptionRequest): Original transcription request
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
         job_id (str): ID for tracking job progress
         job_manager (JobStatusManager): Manages job status updates
@@ -596,10 +596,11 @@ async def podcast_create_final_conversation(
     )
 
     # Ensure all strings are unescaped
-    if "dialogues" in conversation_json:
-        for entry in conversation_json["dialogues"]:
-            if "text" in entry:
-                entry["text"] = unescape_unicode_string(entry["text"])
+    if conversation_json is not None:
+        if "dialogues" in conversation_json:
+            for entry in conversation_json["dialogues"]:
+                if "text" in entry:
+                    entry["text"] = unescape_unicode_string(entry["text"])
 
     prompt_tracker.track(
         "create_final_conversation",

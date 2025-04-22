@@ -1,7 +1,7 @@
 """
-Test module for the LLMManager class.
+Test module for the LLMManagerGemini class.
 
-This module contains integration tests for the LLMManager class, testing various
+This module contains integration tests for the LLMManagerGemini class, testing various
 capabilities like basic queries, parallel processing, JSON schema validation,
 and streaming responses. It uses a mock FastAPI application and OpenTelemetry
 instrumentation for testing purposes.
@@ -12,7 +12,7 @@ import os
 from shared.otel import OpenTelemetryInstrumentation, OpenTelemetryConfig
 import logging
 from fastapi import FastAPI
-from shared.llmmanager import LLMManager
+from shared.llmmanager import LLMManagerGemini
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -33,12 +33,12 @@ async def test_basic_queries():
     """
     Test both synchronous and asynchronous basic queries.
     
-    Tests the basic query functionality of LLMManager by making both sync
+    Tests the basic query functionality of LLMManagerGemini by making both sync
     and async requests with simple prompts. Verifies that both methods
     return expected responses.
 
     The test:
-    1. Creates an LLMManager instance
+    1. Creates an LLMManagerGemini instance
     2. Tests synchronous query with robotics laws prompt
     3. Tests asynchronous query with machine learning prompt
     4. Prints responses for manual verification
@@ -51,7 +51,7 @@ async def test_basic_queries():
     """
     print("\n=== Testing Basic Queries ===")
 
-    manager = LLMManager(api_key=os.getenv("NVIDIA_API_KEY"), telemetry=mock_telemetry)
+    manager = LLMManagerGemini(api_key=os.getenv("NVIDIA_API_KEY"), telemetry=mock_telemetry)
 
     # Test sync query
     print("\nTesting sync query...")
@@ -91,7 +91,7 @@ async def test_parallel_processing():
     simultaneously and collects their responses.
 
     The test:
-    1. Creates an LLMManager instance
+    1. Creates an LLMManagerGemini instance
     2. Defines three programming language questions
     3. Processes queries in parallel using asyncio.gather()
     4. Prints responses in order with corresponding questions
@@ -104,7 +104,7 @@ async def test_parallel_processing():
     """
     print("\n=== Testing Parallel Processing ===")
 
-    manager = LLMManager(api_key=os.getenv("NVIDIA_API_KEY"), telemetry=mock_telemetry)
+    manager = LLMManagerGemini(api_key=os.getenv("NVIDIA_API_KEY"), telemetry=mock_telemetry)
 
     questions = ["What is Python?", "What is JavaScript?", "What is Rust?"]
 
@@ -140,12 +140,12 @@ async def test_json_schema():
     """
     Test JSON schema structured output.
     
-    Verifies that the LLMManager can generate responses conforming to a
+    Verifies that the LLMManagerGemini can generate responses conforming to a
     specified JSON schema. Uses a sample schema for person details including
     name, age, occupation, and hobbies.
 
     The test:
-    1. Creates an LLMManager instance
+    1. Creates an LLMManagerGemini instance
     2. Defines a JSON schema for person details
     3. Requests a character generation conforming to schema
     4. Verifies response matches schema structure
@@ -158,7 +158,7 @@ async def test_json_schema():
     """
     print("\n=== Testing JSON Schema ===")
 
-    manager = LLMManager(api_key=os.getenv("NVIDIA_API_KEY"), telemetry=mock_telemetry)
+    manager = LLMManagerGemini(api_key=os.getenv("NVIDIA_API_KEY"), telemetry=mock_telemetry)
 
     # Define a schema for a person's details
     schema = {
@@ -188,12 +188,12 @@ async def test_streaming():
     """
     Test both synchronous and asynchronous streaming.
     
-    Tests the streaming capabilities of LLMManager using both sync and async
+    Tests the streaming capabilities of LLMManagerGemini using both sync and async
     methods. Verifies that streaming responses are received correctly for
     simple counting and listing tasks.
 
     The test:
-    1. Creates an LLMManager instance
+    1. Creates an LLMManagerGemini instance
     2. Tests sync streaming with counting prompt
     3. Tests async streaming with days of week prompt
     4. Verifies streaming responses are complete and coherent
@@ -206,7 +206,7 @@ async def test_streaming():
     """
     print("\n=== Testing Streaming ===")
 
-    manager = LLMManager(api_key=os.getenv("NVIDIA_API_KEY"), telemetry=mock_telemetry)
+    manager = LLMManagerGemini(api_key=os.getenv("NVIDIA_API_KEY"), telemetry=mock_telemetry)
 
     # Test sync streaming
     print("\nTesting sync streaming...")
@@ -246,7 +246,7 @@ async def test_json_streaming():
     conform to the specified structure.
 
     The test:
-    1. Creates an LLMManager instance
+    1. Creates an LLMManagerGemini instance
     2. Defines a story summary JSON schema
     3. Tests sync JSON streaming
     4. Tests async JSON streaming
@@ -260,7 +260,7 @@ async def test_json_streaming():
     """
     print("\n=== Testing JSON Streaming ===")
 
-    manager = LLMManager(api_key=os.getenv("NVIDIA_API_KEY"), telemetry=mock_telemetry)
+    manager = LLMManagerGemini(api_key=os.getenv("NVIDIA_API_KEY"), telemetry=mock_telemetry)
 
     # Define a simpler schema
     schema = {

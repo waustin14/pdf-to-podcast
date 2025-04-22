@@ -1,14 +1,11 @@
 {
   "reasoning": {
-    "name": "meta/llama-3.1-405b-instruct",
-    "api_base": "https://integrate.api.nvidia.com/v1"
+    "name": "gemini-2.0-flash"
   },
   "json": {
-    "name": "meta/llama-3.1-8b-instruct",
-    "api_base": "https://integrate.api.nvidia.com/v1"
+    "name": "gemini-2.0-flash-lite"
   },
   "iteration": {
-    "name": "meta/llama-3.1-70b-instruct",
-    "api_base": "https://integrate.api.nvidia.com/v1"
+    "name": "gemini-2.0-flash"
   }
 }

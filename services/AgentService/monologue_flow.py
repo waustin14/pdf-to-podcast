@@ -8,7 +8,7 @@ It includes functionality for summarizing PDFs, generating outlines, and creatin
 from shared.api_types import JobStatus, TranscriptionRequest  # Job status tracking and request types
 from shared.podcast_types import Conversation  # Podcast conversation data structures
 from shared.pdf_types import PDFMetadata  # PDF document metadata and content
-from shared.llmmanager import LLMManager  # LLM interaction management
+from shared.llmmanager import LLMManagerGemini  # LLM interaction management
 from shared.job import JobStatusManager  # Background job status tracking
 from typing import List, Dict  # Type hints
 import ujson as json  # Fast JSON processing
@@ -20,14 +20,14 @@ import asyncio  # Async functionality
 
 
 async def monologue_summarize_pdf(
-    pdf_metadata: PDFMetadata, llm_manager: LLMManager, prompt_tracker: PromptTracker
+    pdf_metadata: PDFMetadata, llm_manager: LLMManagerGemini, prompt_tracker: PromptTracker
 ) -> AIMessage:
     """
     Summarize a single PDF document using the LLM.
 
     Args:
         pdf_metadata (PDFMetadata): Metadata and content of the PDF to summarize
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGeminiGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
 
     Returns:
@@ -55,7 +55,7 @@ async def monologue_summarize_pdf(
 async def monologue_summarize_pdfs(
     pdfs: List[PDFMetadata],
     job_id: str,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
     job_manager: JobStatusManager,
     logger: logging.Logger,
@@ -66,7 +66,7 @@ async def monologue_summarize_pdfs(
     Args:
         pdfs (List[PDFMetadata]): List of PDFs to summarize
         job_id (str): ID for tracking job progress
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGeminiGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
         job_manager (JobStatusManager): Manages job status updates
         logger (logging.Logger): Logger for tracking progress
@@ -96,7 +96,7 @@ async def monologue_summarize_pdfs(
 async def monologue_generate_raw_outline(
     summarized_pdfs: List[PDFMetadata],
     request: TranscriptionRequest,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
     job_id: str,
     job_manager: JobStatusManager,
@@ -107,7 +107,7 @@ async def monologue_generate_raw_outline(
     Args:
         summarized_pdfs (List[PDFMetadata]): PDFs with their summaries
         request (TranscriptionRequest): Original transcription request
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGeminiGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
         job_id (str): ID for tracking job progress
         job_manager (JobStatusManager): Manages job status updates
@@ -152,7 +152,7 @@ async def monologue_generate_raw_outline(
 async def monologue_generate_monologue(
     raw_outline: str,
     request: TranscriptionRequest,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
     job_id: str,
     job_manager: JobStatusManager,
@@ -163,7 +163,7 @@ async def monologue_generate_monologue(
     Args:
         raw_outline (str): Generated outline to expand into monologue
         request (TranscriptionRequest): Original transcription request
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGeminiGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
         job_id (str): ID for tracking job progress
         job_manager (JobStatusManager): Manages job status updates
@@ -207,7 +207,7 @@ async def monologue_generate_monologue(
 async def monologue_create_final_conversation(
     monologue: str,
     request: TranscriptionRequest,
-    llm_manager: LLMManager,
+    llm_manager: LLMManagerGemini,
     prompt_tracker: PromptTracker,
     job_id: str,
     job_manager: JobStatusManager,
@@ -218,7 +218,7 @@ async def monologue_create_final_conversation(
     Args:
         monologue (str): Generated monologue transcript
         request (TranscriptionRequest): Original transcription request
-        llm_manager (LLMManager): Manager for LLM interactions
+        llm_manager (LLMManagerGemini): Manager for LLM interactions
         prompt_tracker (PromptTracker): Tracks prompts and responses
         job_id (str): ID for tracking job progress
         job_manager (JobStatusManager): Manages job status updates
@@ -249,10 +249,11 @@ async def monologue_create_final_conversation(
     )
 
     # Ensure all strings are unescaped
-    if "dialogues" in conversation_json:
-        for entry in conversation_json["dialogues"]:
-            if "text" in entry:
-                entry["text"] = unescape_unicode_string(entry["text"])
+    if conversation_json is not None:
+        if "dialogues" in conversation_json:
+            for entry in conversation_json["dialogues"]:
+                if "text" in entry:
+                    entry["text"] = unescape_unicode_string(entry["text"])
 
     prompt_tracker.track(
         "create_final_conversation",
