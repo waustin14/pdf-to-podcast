@@ -17,6 +17,7 @@ class ServiceType(str, Enum):
     PDF = "pdf"  # PDF processing service
     AGENT = "agent"  # Agent/LLM service
     TTS = "tts"  # Text-to-speech service
+    TTS_PROVIDER = "tts_provider"  # TTS provider service
 
 
 class StatusUpdate(BaseModel):

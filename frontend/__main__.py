@@ -24,7 +24,7 @@ import ast
 import re
 
 import uuid
-from frontend.utils import email_demo, logger
+from utils import email_demo, logger
 
 BP_INFO_MARKDOWN="""
 ### Key Features
@@ -240,9 +240,15 @@ with gr.Blocks(css=css, js=js_func) as demo:
             target = [target]
         if isinstance(context, str):
             context = [context]
-        
+
         base_url = os.environ["API_SERVICE_URL"]
         monologue = True if "Monologue Only" in settings else False
+        # Configure voice mappings
+        voice_mapping = {
+            "speaker-1": "am_puck"
+        }
+        if not monologue:
+            voice_mapping["speaker-2"] = "af_heart"
         vdb = False # True if "Vector Database" in settings else False
         filename = str(uuid.uuid4())
         sender_validation = validate_sender(sender_email)
@@ -255,7 +261,7 @@ with gr.Blocks(css=css, js=js_func) as demo:
         email = [recipient] if (sender_validation and len(recipient) > 0 and "SENDER_EMAIL_PASSWORD" in os.environ) else [filename + "@"] # delimiter
 
         # Generate podcast
-        job_id = email_demo.test_api(base_url, target, context, email, monologue, vdb)
+        job_id = email_demo.test_api(base_url, target, context, email, monologue, vdb, voice_mapping=voice_mapping)
 
         # Send file via email
         if sender_validation and len(recipient) > 0 and "SENDER_EMAIL_PASSWORD" in os.environ:

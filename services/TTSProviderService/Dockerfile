@@ -1,19 +1,19 @@
-FROM python:3.11-slim
+FROM python:3.9-slim
 
 USER root
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -x \
     && apt-get update \
-    && apt-get -y install wget curl man git less openssl libssl-dev unzip unar build-essential aria2 tmux vim \
-    && apt-get install -y openssh-server sox libsox-fmt-all libsox-fmt-mp3 libsndfile1-dev ffmpeg \
+    && apt-get -y install espeak-ng gcc ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-
 WORKDIR /workspace
 
-RUN pip install fastapi uvicorn edge-tts pydantic redis pydub \
+RUN pip install --upgrade pip setuptools wheel
+
+RUN pip install fastapi uvicorn kokoro>=0.3.1 misaki[en] pydub pydantic \
     opentelemetry-api \
     opentelemetry-sdk \
     opentelemetry-instrumentation-fastapi \
@@ -29,8 +29,8 @@ COPY shared /shared
 RUN pip install /shared
 
 # Copy service files
-COPY services/TTSService/main.py ./
+COPY services/TTSProviderService/main.py ./
 
-EXPOSE 8889
+EXPOSE 8888
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8889"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8888"]

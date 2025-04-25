@@ -5,23 +5,24 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 import logging
-from elevenlabs.client import ElevenLabs
+from requests import get, post
 import os
 from shared.otel import OpenTelemetryInstrumentation, OpenTelemetryConfig
 from opentelemetry.trace.status import StatusCode
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
+from pydub import AudioSegment
+import io
 from functools import lru_cache
-import httpx
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="ElevenLabs TTS Service", debug=True)
+app = FastAPI(title="TTS Service", debug=True)
 MAX_CONCURRENT_REQUESTS = int(os.getenv("MAX_CONCURRENT_REQUESTS", "5"))
-DEFAULT_VOICE_1 = os.getenv("DEFAULT_VOICE_1", "iP95p4xoKVk53GoZ742B")
-DEFAULT_VOICE_2 = os.getenv("DEFAULT_VOICE_2", "9BWtsMINqrJLrRacOk9x")
+DEFAULT_VOICE_1 = os.getenv("DEFAULT_VOICE_1", "am_puck")
+DEFAULT_VOICE_2 = os.getenv("DEFAULT_VOICE_2", "af_heart")
 DEFAULT_VOICE_MAPPING = {"speaker-1": DEFAULT_VOICE_1, "speaker-2": DEFAULT_VOICE_2}
 
 telemetry = OpenTelemetryInstrumentation()
@@ -62,34 +63,30 @@ class TTSService:
     # 2 minute timeout
     def __init__(self):
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_CONCURRENT_REQUESTS)
-        self.httpx_client = httpx.Client()
-        self.eleven_labs_client = ElevenLabs(
-            api_key=os.getenv("ELEVENLABS_API_KEY"),
-            httpx_client=self.httpx_client,
-            timeout=120,
-        )
-
-    def __exit__(self):
-        self.httpx_client.close()
+        self.provider_url = os.getenv("TTS_PROVIDER_URL", "http://tts-provider-service:8888")
 
     @lru_cache(maxsize=1)
     def get_available_voices(self) -> List[VoiceInfo]:
         """Fetch available voices from ElevenLabs API"""
         with telemetry.tracer.start_as_current_span("tts.get_available_voices") as span:
             try:
-                response = self.eleven_labs_client.voices.get_all()
+                response = get(self.provider_url + "/v1/voices")
+                if response.status_code != 200:
+                    raise HTTPException(
+                        status_code=response.status_code,
+                        detail=f"Failed to fetch voices: {response.text}",
+                    )
                 # Handle the response structure properly
-                voices_data = response.voices  # Access the voices list directly
-                span.set_attribute("num_voices", len(voices_data))
+                voices_data = response.json()  # Access the voices list directly
+                span.set_status(StatusCode.OK)
+                span.set_attribute("response_code", response.status_code)
+                span.set_attribute("num_voices", len(voices_data.items()))
                 return [
                     VoiceInfo(
-                        voice_id=voice.voice_id,
-                        name=voice.name,
-                        description=voice.description
-                        if hasattr(voice, "description")
-                        else None,
+                        voice_id=v_id,
+                        name=v_name,
                     )
-                    for voice in voices_data
+                    for v_id, v_name in voices_data.items()
                 ]
             except Exception as e:
                 logger.error(f"Error fetching voices: {e}")
@@ -152,50 +149,69 @@ class TTSService:
     async def _process_dialogue(
         self, job_id: str, dialogue: List[DialogueEntry], voice_mapping: Dict[str, str]
     ) -> bytes:
-        combined_audio = b""
+        combined_audio = AudioSegment.empty()
+        total_entries = len(dialogue)
+
         with telemetry.tracer.start_as_current_span("tts.process_dialogue") as span:
-            tasks = [
-                (
-                    entry.text,
+            span.set_attribute("num_entries", total_entries)
+            for i, entry in enumerate(dialogue):
+                # Update progress every batch
+                if i % MAX_CONCURRENT_REQUESTS == 0:
+                    job_manager.update_status(
+                        job_id,
+                        JobStatus.PROCESSING,
+                        f"Processing entry {i + 1} of {total_entries}",
+                    )
+                
+                # Determine voice ID for this entry
+                voice_id = (
                     entry.voice_id
                     if entry.voice_id and entry.voice_id in voice_mapping.values()
-                    else voice_mapping.get(
-                        entry.speaker, DEFAULT_VOICE_MAPPING[entry.speaker]
-                    ),
+                    else voice_mapping.get(entry.speaker, DEFAULT_VOICE_MAPPING[entry.speaker])
                 )
-                for entry in dialogue
-            ]
-            span.set_attribute("num_tasks", len(tasks))
+                
+                # Convert text to speech
+                audio_chunk = self._convert_text(entry.text, voice_id)
+                
+                # Load audio chunk into AudioSegment
+                audio_segment = AudioSegment.from_mp3(io.BytesIO(audio_chunk))
 
-            for i in range(0, len(tasks), MAX_CONCURRENT_REQUESTS):
-                batch = tasks[i : i + MAX_CONCURRENT_REQUESTS]
-                job_manager.update_status(
-                    job_id,
-                    JobStatus.PROCESSING,
-                    f"Processing batch {i//MAX_CONCURRENT_REQUESTS + 1} of {(len(tasks)-1)//MAX_CONCURRENT_REQUESTS + 1}",
-                )
+                # Combine with existing audio
+                combined_audio += audio_segment
+                
+                logger.info(f"Added audio chunk {i + 1}/{total_entries}")
 
-                futures = [
-                    self.thread_pool.submit(self._convert_text, text, voice_id)
-                    for text, voice_id in batch
-                ]
-                for future in futures:
-                    combined_audio += await asyncio.get_event_loop().run_in_executor(
-                        None, future.result
-                    )
-
-            return combined_audio
+            # Export final audio
+            output = io.BytesIO()
+            combined_audio.export(output, format="mp3")
+            output.seek(0)
+            return output.getvalue()
 
     def _convert_text(self, text: str, voice_id: str) -> bytes:
         """Convert text to speech using ElevenLabs"""
-        audio_stream = self.eleven_labs_client.text_to_speech.convert(
-            text=text,
-            voice_id=voice_id,
-            model_id="eleven_monolingual_v1",
-            output_format="mp3_44100_128",
-            voice_settings={"stability": 0.5, "similarity_boost": 0.75, "style": 0.0},
-        )
-        return b"".join(chunk for chunk in audio_stream)
+        req_data = {
+            "model": "kokoro-82m",
+            "input": text,
+            "voice": voice_id,
+        }
+        with telemetry.tracer.start_as_current_span("tts.convert_text") as span:
+            span.set_attribute("text", text)
+            span.set_attribute("voice_id", voice_id)
+            response = post(
+                self.provider_url + "/v1/audio/speech",
+                json=req_data,
+                headers={"Content-Type": "application/json"},
+            )
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"Failed to convert text: {response.text}",
+                )
+            audio_data = response.content
+            span.set_status(StatusCode.OK)
+            span.set_attribute("response_code", response.status_code)
+            span.set_attribute("audio_size", len(audio_data))
+        return audio_data
 
 
 # Initialize service

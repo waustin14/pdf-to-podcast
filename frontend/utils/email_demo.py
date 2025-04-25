@@ -23,7 +23,7 @@ import websockets
 import asyncio
 from urllib.parse import urljoin
 import argparse
-from typing import List
+from typing import List, Dict
 
 import smtplib
 from email.message import EmailMessage
@@ -244,13 +244,15 @@ def test_api(
     email: str,
     monologue: bool = False,
     vdb: bool = False,
+    voice_mapping: Dict[str, str] = None,
 ):
-    voice_mapping = {
-        "speaker-1": "iP95p4xoKVk53GoZ742B",
-    }
+    if voice_mapping is None:
+        voice_mapping = {
+            "speaker-1": "am_puck",
+        }
 
-    if not monologue:
-        voice_mapping["speaker-2"] = "9BWtsMINqrJLrRacOk9x"
+        if not monologue:
+            voice_mapping["speaker-2"] = "af_heart"
 
     process_url = f"{base_url}/process_pdf"
 

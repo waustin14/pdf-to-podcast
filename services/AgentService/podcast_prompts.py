@@ -295,6 +295,7 @@ You absolutely must, without exception:
 - Use proper Unicode characters directly (e.g., use ' instead of \\u2019)
 - Ensure all apostrophes, quotes, and special characters are properly formatted
 - Do not escape Unicode characters in the output
+- Do not include any unspoken text or additional information in the "text" field, such as **Speaker 1** or (laughs)
 
 You absolutely must, without exception:
 - Convert all numbers and symbols to spoken form:
