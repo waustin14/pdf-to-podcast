@@ -295,7 +295,9 @@ You absolutely must, without exception:
 - Use proper Unicode characters directly (e.g., use ' instead of \\u2019)
 - Ensure all apostrophes, quotes, and special characters are properly formatted
 - Do not escape Unicode characters in the output
-- Do not include any unspoken text or additional information in the "text" field, such as **Speaker 1** or (laughs)
+- Do not include any nonverbal cues or stage directions (e.g. (smiling), (laughs), (chuckles))
+- Surround text to be emphasized or de-emphasized with brackets followed by the degree of emphasis (+/- 1 or 2) in parentheses (e.g., [emphasized word](+2) or [de-emphasized word](-1))
+- Never include any other unspoken characters, like asterisks, to denote emphasis, or surrounding text with asterisks
 
 You absolutely must, without exception:
 - Convert all numbers and symbols to spoken form:
